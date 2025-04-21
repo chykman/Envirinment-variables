@@ -1,40 +1,182 @@
-# Environment-variables
-
-## I learned the distinction between infrastructure environments and environment variables, and how they are used in software development to manage different stages of the application lifecycle. Infrastructure environments refer to the various settings—like development, testing, and production—where applications are built, tested, and deployed, each serving a unique purpose. Environment variables, on the other hand, are dynamic values (e.g., database URLs, usernames, and passwords) that change based on the environment, allowing scripts to adapt without hardcoding. For a FinTech product across two AWS accounts, I explored how to configure these variables for local development (e.g., DB_URL=localhost), testing (DB_URL=testing-db.example.com), and production (DB_URL=production-db.example.com), ensuring safe experimentation, controlled testing, and secure live deployment. This foundational understanding helps in managing cloud infrastructure more effectively using shell scripts.
-
--
-- ![image](https://github.com/user-attachments/assets/72a0997c-5983-42cd-919f-120e15179b40)
-
--
-- ![image](https://github.com/user-attachments/assets/edea23e3-164e-445a-97c6-071dd61843d4)
-
--
--  ![image](https://github.com/user-attachments/assets/56ce0d51-4beb-43f6-a515-d4ae1370c873)
-
-Understanding Infrastructure Environments and Environment Variables
-Infrastructure Environments
-In software development, infrastructure environments are distinct settings where applications are built, tested, and deployed. The three primary environments are:
-
-Development: Used for building and initial testing of code. Developers work here to implement features and fix bugs.
-Testing: A controlled environment to verify the application's functionality, performance, and stability before going live.
-Production: The live environment where the application is deployed and accessible to end-users.
-
-Environment Variables
-Environment variables are dynamic values that can be set outside the application code and change based on the environment. They allow the same codebase to adapt to different settings without modification. Common examples include:
-
-Database URLs
-Usernames
-Passwords
-
-Application in FinTech Project
-In the context of a FinTech product deployed across two AWS accounts, environment variables play a crucial role. They are configured differently for each environment to ensure appropriate behavior:
-
-Local Development: Variables are set to use local resources, e.g., DB_URL=localhost, DB_USER=test_user, DB_PASS=test_pass.
-Testing: Variables point to testing resources, e.g., DB_URL=testing-db.example.com, DB_USER=testing_user, DB_PASS=testing_pass.
-Production: Variables are set for live resources, e.g., DB_URL=production-db.example.com, DB_USER=prod_user, DB_PASS=prod_pass.
-
-Proper management of these variables is critical, especially in production, to maintain security and prevent unauthorized access to sensitive information.
-Understanding and properly managing infrastructure environments and environment variables is essential for effective cloud infrastructure management, particularly in complex setups like multi-account AWS deployments.
 
 
+# AWS Environment Switching Utility
 
+## Description
+
+`aws_cloud_manager.sh` is a **Bash script** that provides a secure and efficient way to switch between different AWS environments such as **local**, **testing**, and **production**. By using structured functions, it ensures that the correct AWS CLI profile is activated based on the specified environment, while also performing necessary checks to maintain security and prevent errors.
+
+Managing multiple AWS environments can be challenging, especially when dealing with **sensitive credentials and configurations**. This script addresses these challenges by compartmentalizing risks through **modular functions**, each serving a specific protective role. This improves security, readability, and maintainability.
+
+---
+
+## Setup
+
+To use this script effectively, ensure your AWS credentials and configurations are properly set up:
+
+### Credentials
+
+Store your AWS access keys in `~/.aws/credentials`, using **separate profiles** for each environment:
+
+```ini
+[testing]
+aws_access_key_id = YOUR_TESTING_ACCESS_KEY
+aws_secret_access_key = YOUR_TESTING_SECRET_KEY
+
+[production]
+aws_access_key_id = YOUR_PRODUCTION_ACCESS_KEY
+aws_secret_access_key = YOUR_PRODUCTION_SECRET_KEY
+```
+
+### Configurations
+
+Define region and output settings in `~/.aws/config`:
+
+```ini
+[profile testing]
+region = us-west-2
+output = json
+
+[profile production]
+region = us-east-1
+output = json
+```
+
+### File Permissions
+
+Ensure that the credentials file is secure:
+
+```bash
+chmod 600 ~/.aws/credentials
+```
+
+---
+
+## Script Overview
+
+The `aws_cloud_manager.sh` script is modular, with each function performing a specific task:
+
+- `check_aws_cli()`: Verifies that the AWS CLI is installed.
+- `check_aws_profile()`: Validates that the specified AWS profile exists and is configured.
+- `activate_infos_environment()`: Switches to the specified environment using a case statement.
+- `check_num_of_args()`: Ensures exactly one argument is provided.
+
+---
+
+## Function Details
+
+### `check_aws_cli()`
+
+- Verifies the presence of the AWS CLI using `aws --version`.
+- Exits the script with an error if the CLI is not installed.
+
+### `check_aws_profile()`
+
+- Uses the `-z` test to ensure the profile is provided and not empty.
+- Confirms the profile exists in AWS configuration files.
+
+### `activate_infos_environment()`
+
+- Uses a `case` statement to handle switching between `local`, `testing`, and `production`.
+- Sets the appropriate AWS CLI profile.
+- Ensures only valid environments are accepted.
+
+### `check_num_of_args()`
+
+- Ensures the script receives exactly one argument (environment name).
+- If not, displays a usage message and exits.
+
+---
+
+## Usage Examples
+
+### Switch to Testing Environment
+
+```bash
+./aws_cloud_manager.sh testing
+```
+
+Activates the `testing` AWS CLI profile.
+
+### Switch to Production Environment
+
+```bash
+./aws_cloud_manager.sh production
+```
+
+Activates the `production` AWS CLI profile.
+
+### Attempt to Switch to an Invalid Environment
+
+```bash
+./aws_cloud_manager.sh invalid
+```
+
+Displays an error and exits — `invalid` is not a recognized environment.
+
+---
+
+## Additional Notes
+
+### Security Best Practices
+
+- Keep your AWS credentials secure.
+- Use IAM roles and policies for **least privilege**.
+- Regularly rotate access keys.
+- Never share your credentials.
+
+### Dependencies
+
+Ensure the AWS CLI is installed:
+
+```bash
+sudo apt install awscli
+```
+
+### Troubleshooting
+
+If you encounter issues:
+
+- Verify AWS credentials and config files.
+- Ensure the script has execute permissions:
+
+```bash
+chmod +x aws_cloud_manager.sh
+```
+
+- Check script output for error messages and act accordingly.
+
+---
+
+## Script Simplification
+
+The script is a **simplified example** to illustrate concepts. In production, consider adding:
+
+- More robust **error handling**
+- **Logging**
+- Integration with **other tools or services**
+
+---
+
+## Conclusion
+
+`aws_cloud_manager.sh` offers a **secure and efficient** method for managing AWS environments through structured functions. By compartmentalizing tasks like:
+
+- Checking the AWS CLI
+- Validating profiles
+- Switching environments
+- Verifying arguments
+
+...the script ensures reliability, clarity, and security. Adopting similar practices helps manage cloud infrastructure effectively and reduces the risk of errors in production.
+
+---
+
+### Screenshots
+
+![Environment Setup Screenshot 1](https://github.com/user-attachments/assets/72a0997c-5983-42cd-919f-120e15179b40)
+
+![Environment Setup Screenshot 2](https://github.com/user-attachments/assets/edea23e3-164e-445a-97c6-071dd61843d4)
+
+![Environment Setup Screenshot 3](https://github.com/user-attachments/assets/56ce0d51-4beb-43f6-a515-d4ae1370c873)
+
+---
